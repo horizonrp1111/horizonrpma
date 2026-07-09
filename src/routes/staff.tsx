@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getDashboard } from "@/lib/account.functions";
 import {
   createStaffApplication,
+  getStaffRequestsOpen,
   listMyStaffApplications,
   moderateStaffApplication,
   type StaffApplication,
@@ -33,6 +34,11 @@ export const Route = createFileRoute("/staff")({
 function StaffPage() {
   const { data: me } = useSuspenseQuery(meOptions);
   const [showNew, setShowNew] = useState(false);
+  const loadOpen = useServerFn(getStaffRequestsOpen);
+  const { data: open, isLoading: openLoading } = useQuery({
+    queryKey: ["staff-requests-open"],
+    queryFn: () => loadOpen(),
+  });
 
   if (!me.profile) {
     return (
@@ -61,18 +67,28 @@ function StaffPage() {
         </p>
       </div>
 
-      {showNew ? (
+      {showNew && open ? (
         <NewStaffRequest onDone={() => setShowNew(false)} onCancel={() => setShowNew(false)} />
       ) : (
         <>
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setShowNew(true)}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
-            >
-              + New staff request
-            </button>
-          </div>
+          {!openLoading && !open && (
+            <div className="mt-6 rounded-xl border border-rose-500/50 bg-rose-500/10 p-6 text-center">
+              <p className="text-lg font-semibold text-rose-200">Staff requests are currently closed</p>
+              <p className="mt-1 text-sm text-rose-200/80">
+                Please check back later — the team will open new applications when they're ready.
+              </p>
+            </div>
+          )}
+          {open && (
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowNew(true)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
+              >
+                + New staff request
+              </button>
+            </div>
+          )}
           <MyStaffList />
         </>
       )}
