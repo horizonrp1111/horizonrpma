@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getDashboard } from "@/lib/account.functions";
 import {
   createStaffApplication,
+  getStaffRequestsOpen,
   listMyStaffApplications,
   listStaffApplications,
   setStaffApplicationStatus,
