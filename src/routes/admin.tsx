@@ -59,6 +59,7 @@ function AdminPage() {
     { id: "pending", label: "Pending" },
     { id: "approved", label: "Whitelisted" },
     { id: "denied", label: "Rejected" },
+    { id: "admins", label: "Administrators" },
   ];
 
   return (
@@ -88,14 +89,15 @@ function AdminPage() {
       </div>
 
       <div className="mt-8">
-        <ApplicationsTab status={tab} />
+        {tab === "admins" ? (
+          <AdminsTab selfId={me.profile.discord_id} />
+        ) : (
+          <ApplicationsTab status={tab} />
+        )}
       </div>
     </section>
   );
 }
-
-function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {
-  const load = useServerFn(listApplications);
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["admin-apps", status],
     queryFn: () => load({ data: { status } }),
