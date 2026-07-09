@@ -137,10 +137,6 @@ function AdminStaffRequests({ status }: { status: "open" | "closed" }) {
     </ul>
   );
 }
-  const [openId, setOpenId] = useState<string | null>(null);
-  if (openId) return <TicketView id={openId} onBack={() => setOpenId(null)} />;
-  return <TicketsList mode="all" status={status} onOpen={setOpenId} />;
-}
 
 function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {
   const load = useServerFn(listApplications);
