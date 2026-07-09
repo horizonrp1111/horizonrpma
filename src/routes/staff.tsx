@@ -33,6 +33,8 @@ export const Route = createFileRoute("/staff")({
 
 function StaffPage() {
   const { data: me } = useSuspenseQuery(meOptions);
+  const loadOpen = useServerFn(getStaffRequestsOpen);
+  const { data: isOpen } = useQuery({ queryKey: ["staff-open-flag"], queryFn: () => loadOpen() });
   const [showNew, setShowNew] = useState(false);
 
   if (!me.profile) {
