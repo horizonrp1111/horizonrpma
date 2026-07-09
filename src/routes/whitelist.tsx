@@ -1,7 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useState } from "react";
 import { submitWhitelist } from "@/lib/whitelist.functions";
+import { getDashboard } from "@/lib/account.functions";
+
+const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
 export const Route = createFileRoute("/whitelist")({
   head: () => ({
@@ -10,6 +14,7 @@ export const Route = createFileRoute("/whitelist")({
       { name: "description", content: "Apply for the Horizon Roleplay whitelist." },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(meOptions),
   component: WhitelistPage,
 });
 
@@ -32,6 +37,7 @@ const initial: FormState = {
 };
 
 function WhitelistPage() {
+  const { data: me } = useSuspenseQuery(meOptions);
   const send = useServerFn(submitWhitelist);
   const [form, setForm] = useState<FormState>(initial);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -62,23 +68,60 @@ function WhitelistPage() {
     }
   };
 
+  if (!me.profile) {
+    return (
+      <section className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <h1 className="animate-title-shimmer text-5xl font-black">WHITELIST</h1>
+        <p className="mt-6 text-muted-foreground">
+          Log in with your Discord account to submit a whitelist application. Only one application per account is allowed.
+        </p>
+        <a
+          href="/api/auth/discord"
+          className="mt-8 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
+        >
+          Login with Discord
+        </a>
+      </section>
+    );
+  }
+
+  if (me.application) {
+    const s = me.application.status;
+    const tone =
+      s === "approved" ? "text-emerald-300" : s === "denied" ? "text-rose-300" : "text-amber-200";
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-20">
+        <div className="rounded-2xl border border-primary/40 bg-card/60 p-10 text-center backdrop-blur-sm">
+          <h2 className="text-3xl font-bold">You've already applied</h2>
+          <p className="mt-3 text-muted-foreground">
+            Only one whitelist application per Discord account.
+          </p>
+          <p className={`mt-6 text-xl font-semibold uppercase tracking-wide ${tone}`}>Status: {s}</p>
+          <Link
+            to="/dashboard"
+            className="mt-8 inline-flex rounded-lg border border-primary/60 px-6 py-2 font-semibold text-primary-glow hover:bg-primary/10"
+          >
+            Go to dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (status === "done") {
     return (
       <div className="mx-auto max-w-3xl px-6 py-20">
         <div className="rounded-2xl border border-primary/60 bg-card/60 p-10 text-center backdrop-blur-sm">
           <h2 className="text-3xl font-bold text-primary-glow">Application Sent</h2>
           <p className="mt-3 text-muted-foreground">
-            Your whitelist application has been delivered to our staff. We'll get back to you on Discord.
+            Your whitelist application has been submitted. Staff will review it and get back to you on Discord.
           </p>
-          <button
-            onClick={() => {
-              setForm(initial);
-              setStatus("idle");
-            }}
-            className="mt-6 rounded-lg border border-primary/60 px-6 py-2 text-primary-glow hover:bg-primary/10"
+          <Link
+            to="/dashboard"
+            className="mt-6 inline-flex rounded-lg border border-primary/60 px-6 py-2 font-semibold text-primary-glow hover:bg-primary/10"
           >
-            Submit another
-          </button>
+            View my dashboard
+          </Link>
         </div>
       </div>
     );
@@ -96,7 +139,7 @@ function WhitelistPage() {
     <div className="mx-auto max-w-3xl px-6 py-20">
       <h1 className="animate-title-shimmer text-center text-5xl font-black md:text-6xl">WHITELIST</h1>
       <p className="mt-4 text-center text-muted-foreground">
-        Complete every field, then click <span className="text-primary-glow">Send Whitelist</span>.
+        Applying as <span className="text-primary-glow">{me.profile.global_name || me.profile.username}</span>. Complete every field, then click <span className="text-primary-glow">Send Whitelist</span>.
       </p>
 
       <form
