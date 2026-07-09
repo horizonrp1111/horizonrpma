@@ -9,6 +9,7 @@ import {
   listApplications,
   moderateApplication,
   revokeAdmin,
+  revokeWhitelist,
   type AdminApplication,
   type AdminMember,
 } from "@/lib/admin.functions";
@@ -125,16 +126,17 @@ function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied"
   return (
     <div className="grid gap-4">
       {data.map((app) => (
-        <ApplicationCard key={app.id} app={app} showActions={status === "pending"} />
+        <ApplicationCard key={app.id} app={app} showActions={status === "pending"} showRevoke={status === "approved"} />
       ))}
     </div>
   );
 }
 
-function ApplicationCard({ app, showActions }: { app: AdminApplication; showActions: boolean }) {
+function ApplicationCard({ app, showActions, showRevoke }: { app: AdminApplication; showActions: boolean; showRevoke?: boolean }) {
   const qc = useQueryClient();
   const moderate = useServerFn(moderateApplication);
-  const [busy, setBusy] = useState<null | "approve" | "deny">(null);
+  const revoke = useServerFn(revokeWhitelist);
+  const [busy, setBusy] = useState<null | "approve" | "deny" | "revoke">(null);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -143,6 +145,20 @@ function ApplicationCard({ app, showActions }: { app: AdminApplication; showActi
     setErr(null);
     try {
       await moderate({ data: { id: app.id, action } });
+      await qc.invalidateQueries({ queryKey: ["admin-apps"] });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onRevoke() {
+    if (!confirm("Remove whitelist from this member? This will delete their application and update Discord roles.")) return;
+    setBusy("revoke");
+    setErr(null);
+    try {
+      await revoke({ data: { id: app.id } });
       await qc.invalidateQueries({ queryKey: ["admin-apps"] });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed");
@@ -205,6 +221,15 @@ function ApplicationCard({ app, showActions }: { app: AdminApplication; showActi
                 {busy === "deny" ? "…" : "Decline"}
               </button>
             </>
+          )}
+          {showRevoke && (
+            <button
+              onClick={onRevoke}
+              disabled={!!busy}
+              className="rounded-lg bg-rose-500/90 px-3 py-1.5 text-sm font-semibold text-rose-950 hover:bg-rose-400 disabled:opacity-50"
+            >
+              {busy === "revoke" ? "…" : "Remove whitelist"}
+            </button>
           )}
         </div>
       </div>

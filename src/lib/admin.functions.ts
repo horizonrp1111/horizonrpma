@@ -68,6 +68,7 @@ export const listApplications = createServerFn({ method: "GET" })
 const DISCORD_GUILD_ID = "1479830584997052489";
 const DISCORD_APPROVED_ROLE_ID = "1479877357463666950";
 const DISCORD_REJECTED_ROLE_ID = "1521613631878332526";
+const DISCORD_REVOKED_ROLE_ID = "1523668523904405727";
 
 async function sendDiscordDM(userId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -99,34 +100,38 @@ async function sendDiscordDM(userId: string, content: string) {
   }
 }
 
-async function assignDiscordRole(userId: string, action: "approve" | "deny") {
+async function updateDiscordRoles(userId: string, addRoles: string[], removeRoles: string[]) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) {
     console.warn("DISCORD_BOT_TOKEN not set — skipping role assignment");
     return;
   }
-  const addRole = action === "approve" ? DISCORD_APPROVED_ROLE_ID : DISCORD_REJECTED_ROLE_ID;
-  const removeRole = action === "approve" ? DISCORD_REJECTED_ROLE_ID : DISCORD_APPROVED_ROLE_ID;
   const headers = { Authorization: `Bot ${token}`, "Content-Type": "application/json" };
   try {
-    const addRes = await fetch(
-      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${addRole}`,
-      { method: "PUT", headers },
-    );
-    if (!addRes.ok) {
-      console.error(`Discord role add failed [${addRes.status}]: ${await addRes.text()}`);
+    for (const roleId of addRoles) {
+      const res = await fetch(
+        `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+        { method: "PUT", headers },
+      );
+      if (!res.ok) console.error(`Discord role add failed [${res.status}]: ${await res.text()}`);
     }
-    // best-effort remove opposite role; ignore 404 (user didn't have it)
-    const rmRes = await fetch(
-      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${removeRole}`,
-      { method: "DELETE", headers },
-    );
-    if (!rmRes.ok && rmRes.status !== 404) {
-      console.error(`Discord role remove failed [${rmRes.status}]: ${await rmRes.text()}`);
+    for (const roleId of removeRoles) {
+      const res = await fetch(
+        `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+        { method: "DELETE", headers },
+      );
+      if (!res.ok && res.status !== 404)
+        console.error(`Discord role remove failed [${res.status}]: ${await res.text()}`);
     }
   } catch (e) {
-    console.error("Discord role assign error:", e);
+    console.error("Discord role update error:", e);
   }
+}
+
+async function assignDiscordRole(userId: string, action: "approve" | "deny") {
+  const add = action === "approve" ? DISCORD_APPROVED_ROLE_ID : DISCORD_REJECTED_ROLE_ID;
+  const remove = action === "approve" ? DISCORD_REJECTED_ROLE_ID : DISCORD_APPROVED_ROLE_ID;
+  await updateDiscordRoles(userId, [add], [remove, DISCORD_REVOKED_ROLE_ID]);
 }
 
 export const moderateApplication = createServerFn({ method: "POST" })
@@ -167,6 +172,46 @@ export const moderateApplication = createServerFn({ method: "POST" })
     }
 
     return { ok: true, status };
+  });
+
+export const revokeWhitelist = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: app, error: fetchErr } = await supabaseAdmin
+      .from("whitelist_applications")
+      .select("discord_id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!app) throw new Error("Application not found");
+    if (app.status !== "approved") throw new Error("Only whitelisted members can be revoked.");
+
+    const { error: delErr } = await supabaseAdmin
+      .from("whitelist_applications")
+      .delete()
+      .eq("id", data.id);
+    if (delErr) throw new Error(delErr.message);
+
+    if (app.discord_id) {
+      await supabaseAdmin
+        .from("discord_profiles")
+        .update({ linked_serial: null })
+        .eq("discord_id", app.discord_id);
+      await sendDiscordDM(
+        app.discord_id,
+        `tm sa7b mnk lwhitelist. la kan 3ndk chi so2al 7ol ticket f server discord.`,
+      );
+      await updateDiscordRoles(
+        app.discord_id,
+        [DISCORD_REVOKED_ROLE_ID],
+        [DISCORD_APPROVED_ROLE_ID, DISCORD_REJECTED_ROLE_ID],
+      );
+    }
+
+    return { ok: true };
   });
 
 export type AdminMember = {
