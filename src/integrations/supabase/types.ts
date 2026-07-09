@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_applications: {
+        Row: {
+          created_at: string
+          experience: string
+          how_help: string
+          id: string
+          status: string
+          updated_at: string
+          user_discord_id: string
+          why_join: string
+        }
+        Insert: {
+          created_at?: string
+          experience: string
+          how_help: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_discord_id: string
+          why_join: string
+        }
+        Update: {
+          created_at?: string
+          experience?: string
+          how_help?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_discord_id?: string
+          why_join?: string
+        }
+        Relationships: []
+      }
       support_ticket_messages: {
         Row: {
           author_discord_id: string
