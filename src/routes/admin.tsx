@@ -153,6 +153,20 @@ function ApplicationCard({ app, showActions, showRevoke }: { app: AdminApplicati
     }
   }
 
+  async function onRevoke() {
+    if (!confirm("Remove whitelist from this member? This will delete their application and update Discord roles.")) return;
+    setBusy("revoke");
+    setErr(null);
+    try {
+      await revoke({ data: { id: app.id } });
+      await qc.invalidateQueries({ queryKey: ["admin-apps"] });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const badge =
     app.status === "approved"
       ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
