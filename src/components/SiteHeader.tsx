@@ -11,6 +11,7 @@ const nav = [
   { to: "/whitelist", label: "Whitelist" },
   { to: "/discord", label: "Discord" },
   { to: "/support", label: "Support" },
+  { to: "/staff", label: "Staff" },
 ] as const;
 
 export function SiteHeader() {

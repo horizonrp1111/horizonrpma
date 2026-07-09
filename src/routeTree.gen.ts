@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhitelistRouteImport } from './routes/whitelist'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -29,6 +30,11 @@ const WhitelistRoute = WhitelistRouteImport.update({
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RulesRoute = RulesRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/staff'
     | '/support'
     | '/whitelist'
     | '/api/auth/discord'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/staff'
     | '/support'
     | '/whitelist'
     | '/api/auth/discord'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/staff'
     | '/support'
     | '/whitelist'
     | '/api/auth/discord'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DiscordRoute: typeof DiscordRoute
   RulesRoute: typeof RulesRoute
+  StaffRoute: typeof StaffRoute
   SupportRoute: typeof SupportRoute
   WhitelistRoute: typeof WhitelistRoute
   ApiAuthDiscordRoute: typeof ApiAuthDiscordRouteWithChildren
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rules': {
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DiscordRoute: DiscordRoute,
   RulesRoute: RulesRoute,
+  StaffRoute: StaffRoute,
   SupportRoute: SupportRoute,
   WhitelistRoute: WhitelistRoute,
   ApiAuthDiscordRoute: ApiAuthDiscordRouteWithChildren,

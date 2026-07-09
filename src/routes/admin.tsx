@@ -14,6 +14,8 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
+import { listStaffApplications } from "@/lib/staff.functions";
+import { StaffCard } from "@/routes/staff";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
@@ -29,7 +31,7 @@ export const Route = createFileRoute("/admin")({
   ),
 });
 
-type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "admins";
+type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "staff-open" | "staff-closed" | "admins";
 
 function AdminPage() {
   const { data: me } = useSuspenseQuery(meOptions);
@@ -63,6 +65,8 @@ function AdminPage() {
     { id: "denied", label: "Rejected" },
     { id: "tickets-open", label: "Open tickets" },
     { id: "tickets-closed", label: "Closed tickets" },
+    { id: "staff-open", label: "Staff requests" },
+    { id: "staff-closed", label: "Closed staff requests" },
     { id: "admins", label: "Administrators" },
   ];
 
@@ -97,6 +101,8 @@ function AdminPage() {
           <AdminsTab selfId={me.profile.discord_id} />
         ) : tab === "tickets-open" || tab === "tickets-closed" ? (
           <AdminTickets status={tab === "tickets-open" ? "open" : "closed"} />
+        ) : tab === "staff-open" || tab === "staff-closed" ? (
+          <AdminStaffRequests status={tab === "staff-open" ? "open" : "closed"} />
         ) : (
           <ApplicationsTab status={tab} />
         )}
@@ -109,6 +115,26 @@ function AdminTickets({ status }: { status: "open" | "closed" }) {
   const [openId, setOpenId] = useState<string | null>(null);
   if (openId) return <TicketView id={openId} onBack={() => setOpenId(null)} />;
   return <TicketsList mode="all" status={status} onOpen={setOpenId} />;
+}
+
+function AdminStaffRequests({ status }: { status: "open" | "closed" }) {
+  const qc = useQueryClient();
+  const load = useServerFn(listStaffApplications);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["staff-admin", status],
+    queryFn: () => load({ data: { status } }),
+  });
+  if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
+  if (isError) return <p className="text-rose-400">{(error as Error).message}</p>;
+  if (!data || data.length === 0)
+    return <p className="rounded-xl border border-border/60 bg-card/40 p-8 text-center text-muted-foreground">No {status} staff requests.</p>;
+  return (
+    <ul className="grid gap-4">
+      {data.map((a) => (
+        <StaffCard key={a.id} app={a} adminControls onChanged={() => qc.invalidateQueries({ queryKey: ["staff-admin"] })} />
+      ))}
+    </ul>
+  );
 }
 
 function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {
