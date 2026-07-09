@@ -98,6 +98,9 @@ function AdminPage() {
     </section>
   );
 }
+
+function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {
+  const load = useServerFn(listApplications);
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["admin-apps", status],
     queryFn: () => load({ data: { status } }),
