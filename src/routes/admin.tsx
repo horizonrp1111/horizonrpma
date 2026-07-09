@@ -132,10 +132,11 @@ function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied"
   );
 }
 
-function ApplicationCard({ app, showActions }: { app: AdminApplication; showActions: boolean }) {
+function ApplicationCard({ app, showActions, showRevoke }: { app: AdminApplication; showActions: boolean; showRevoke?: boolean }) {
   const qc = useQueryClient();
   const moderate = useServerFn(moderateApplication);
-  const [busy, setBusy] = useState<null | "approve" | "deny">(null);
+  const revoke = useServerFn(revokeWhitelist);
+  const [busy, setBusy] = useState<null | "approve" | "deny" | "revoke">(null);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
