@@ -60,6 +60,8 @@ function AdminPage() {
     { id: "pending", label: "Pending" },
     { id: "approved", label: "Whitelisted" },
     { id: "denied", label: "Rejected" },
+    { id: "tickets-open", label: "Open tickets" },
+    { id: "tickets-closed", label: "Closed tickets" },
     { id: "admins", label: "Administrators" },
   ];
 
