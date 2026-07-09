@@ -3,7 +3,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient, queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getDashboard } from "@/lib/account.functions";
-import { listApplications, moderateApplication, type AdminApplication } from "@/lib/admin.functions";
+import {
+  grantAdmin,
+  listAdmins,
+  listApplications,
+  moderateApplication,
+  revokeAdmin,
+  type AdminApplication,
+  type AdminMember,
+} from "@/lib/admin.functions";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
