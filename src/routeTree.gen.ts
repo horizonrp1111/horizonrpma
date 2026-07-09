@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhitelistRouteImport } from './routes/whitelist'
 import { Route as RulesRouteImport } from './routes/rules'
+import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const WhitelistRoute = WhitelistRouteImport.update({
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
   path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscordRoute = DiscordRouteImport.update({
+  id: '/discord',
+  path: '/discord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/rules' | '/whitelist'
+  fullPaths: '/' | '/about' | '/discord' | '/rules' | '/whitelist'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/rules' | '/whitelist'
-  id: '__root__' | '/' | '/about' | '/rules' | '/whitelist'
+  to: '/' | '/about' | '/discord' | '/rules' | '/whitelist'
+  id: '__root__' | '/' | '/about' | '/discord' | '/rules' | '/whitelist'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  DiscordRoute: typeof DiscordRoute
   RulesRoute: typeof RulesRoute
   WhitelistRoute: typeof WhitelistRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/rules'
       fullPath: '/rules'
       preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discord': {
+      id: '/discord'
+      path: '/discord'
+      fullPath: '/discord'
+      preLoaderRoute: typeof DiscordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -105,9 +122,20 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  DiscordRoute: DiscordRoute,
   RulesRoute: RulesRoute,
   WhitelistRoute: WhitelistRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
