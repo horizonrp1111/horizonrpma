@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getDashboard } from "@/lib/account.functions";
 import {
   createStaffApplication,
+  getStaffRequestsOpen,
   listMyStaffApplications,
   moderateStaffApplication,
   type StaffApplication,
@@ -33,6 +34,11 @@ export const Route = createFileRoute("/staff")({
 function StaffPage() {
   const { data: me } = useSuspenseQuery(meOptions);
   const [showNew, setShowNew] = useState(false);
+  const loadOpen = useServerFn(getStaffRequestsOpen);
+  const { data: open, isLoading: openLoading } = useQuery({
+    queryKey: ["staff-requests-open"],
+    queryFn: () => loadOpen(),
+  });
 
   if (!me.profile) {
     return (
