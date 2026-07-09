@@ -6,6 +6,7 @@ import { getDashboard } from "@/lib/account.functions";
 import {
   createTicket,
   getTicket,
+  listAllTickets,
   listMyTickets,
   replyToTicket,
   setTicketStatus,

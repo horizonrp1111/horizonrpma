@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhitelistRouteImport } from './routes/whitelist'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -23,6 +24,11 @@ import { Route as ApiAuthDiscordCallbackRouteImport } from './routes/api/auth/di
 const WhitelistRoute = WhitelistRouteImport.update({
   id: '/whitelist',
   path: '/whitelist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RulesRoute = RulesRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
   '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
   '/api/auth/logout': typeof ApiAuthLogoutRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/support'
     | '/whitelist'
     | '/api/auth/discord'
     | '/api/auth/logout'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/support'
     | '/whitelist'
     | '/api/auth/discord'
     | '/api/auth/logout'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/support'
     | '/whitelist'
     | '/api/auth/discord'
     | '/api/auth/logout'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DiscordRoute: typeof DiscordRoute
   RulesRoute: typeof RulesRoute
+  SupportRoute: typeof SupportRoute
   WhitelistRoute: typeof WhitelistRoute
   ApiAuthDiscordRoute: typeof ApiAuthDiscordRouteWithChildren
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
@@ -166,6 +179,13 @@ declare module '@tanstack/react-router' {
       path: '/whitelist'
       fullPath: '/whitelist'
       preLoaderRoute: typeof WhitelistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rules': {
@@ -253,6 +273,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DiscordRoute: DiscordRoute,
   RulesRoute: RulesRoute,
+  SupportRoute: SupportRoute,
   WhitelistRoute: WhitelistRoute,
   ApiAuthDiscordRoute: ApiAuthDiscordRouteWithChildren,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
