@@ -14,7 +14,7 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
-import { listStaffApplications } from "@/lib/staff.functions";
+import { getStaffRequestsOpen, listStaffApplications, setStaffRequestsOpen } from "@/lib/staff.functions";
 import { StaffCard } from "@/routes/staff";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
@@ -117,6 +117,44 @@ function AdminTickets({ status }: { status: "open" | "closed" }) {
   return <TicketsList mode="all" status={status} onOpen={setOpenId} />;
 }
 
+function StaffOpenToggle() {
+  const qc = useQueryClient();
+  const loadOpen = useServerFn(getStaffRequestsOpen);
+  const setOpen = useServerFn(setStaffRequestsOpen);
+  const { data: isOpen, isLoading } = useQuery({ queryKey: ["staff-open-flag"], queryFn: () => loadOpen() });
+  const [busy, setBusy] = useState(false);
+  async function toggle() {
+    setBusy(true);
+    try {
+      await setOpen({ data: { open: !isOpen } });
+      await qc.invalidateQueries({ queryKey: ["staff-open-flag"] });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card/50 p-4">
+      <div>
+        <p className="font-semibold">Staff requests are {isLoading ? "…" : isOpen ? "OPEN" : "CLOSED"}</p>
+        <p className="text-sm text-muted-foreground">
+          When open, members can submit new staff requests. When closed, they see a "closed" notice instead of the form.
+        </p>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={busy || isLoading}
+        className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-lg disabled:opacity-50 ${
+          isOpen
+            ? "bg-rose-500/90 text-rose-950 hover:bg-rose-400 shadow-rose-500/30"
+            : "bg-emerald-500/90 text-emerald-950 hover:bg-emerald-400 shadow-emerald-500/30"
+        }`}
+      >
+        {busy ? "…" : isOpen ? "Close staff requests" : "Open staff requests"}
+      </button>
+    </div>
+  );
+}
+
 function AdminStaffRequests({ status }: { status: "open" | "closed" }) {
   const qc = useQueryClient();
   const load = useServerFn(listStaffApplications);
@@ -124,16 +162,23 @@ function AdminStaffRequests({ status }: { status: "open" | "closed" }) {
     queryKey: ["staff-admin", status],
     queryFn: () => load({ data: { status } }),
   });
-  if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (isError) return <p className="text-rose-400">{(error as Error).message}</p>;
-  if (!data || data.length === 0)
-    return <p className="rounded-xl border border-border/60 bg-card/40 p-8 text-center text-muted-foreground">No {status} staff requests.</p>;
   return (
-    <ul className="grid gap-4">
-      {data.map((a) => (
-        <StaffCard key={a.id} app={a} adminControls onChanged={() => qc.invalidateQueries({ queryKey: ["staff-admin"] })} />
-      ))}
-    </ul>
+    <div>
+      <StaffOpenToggle />
+      {isLoading ? (
+        <p className="text-muted-foreground">Loading…</p>
+      ) : isError ? (
+        <p className="text-rose-400">{(error as Error).message}</p>
+      ) : !data || data.length === 0 ? (
+        <p className="rounded-xl border border-border/60 bg-card/40 p-8 text-center text-muted-foreground">No {status} staff requests.</p>
+      ) : (
+        <ul className="grid gap-4">
+          {data.map((a) => (
+            <StaffCard key={a.id} app={a} adminControls onChanged={() => qc.invalidateQueries({ queryKey: ["staff-admin"] })} />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

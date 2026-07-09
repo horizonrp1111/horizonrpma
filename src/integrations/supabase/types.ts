@@ -65,6 +65,24 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          id: boolean
+          staff_requests_open: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          staff_requests_open?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          staff_requests_open?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_applications: {
         Row: {
           created_at: string
