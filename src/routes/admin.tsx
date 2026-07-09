@@ -51,7 +51,6 @@ function AdminPage() {
     { id: "pending", label: "Pending" },
     { id: "approved", label: "Whitelisted" },
     { id: "denied", label: "Rejected" },
-    { id: "mta", label: "MTA Server" },
   ];
 
   return (
