@@ -192,66 +192,6 @@ function ApplicationCard({ app, showActions }: { app: AdminApplication; showActi
   );
 }
 
-function MtaTab() {
-  const load = useServerFn(getMtaStatus);
-  const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["mta-status"],
-    queryFn: () => load(),
-    refetchOnWindowFocus: false,
-  });
-
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card/50 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">MTA Server</h2>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-mono">mtasa://92.119.165.177:9527</span>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <a
-            href="mtasa://92.119.165.177:9527"
-            className="rounded-lg border border-primary/50 bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary-glow hover:bg-primary/20"
-          >
-            Connect
-          </a>
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="rounded-lg border border-border/60 px-3 py-1.5 text-sm hover:bg-background/60 disabled:opacity-50"
-          >
-            {isFetching ? "Refreshing…" : "Refresh"}
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        {isLoading && <p className="text-muted-foreground">Checking server…</p>}
-        {data && data.online && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Stat label="Status" value="Online" tone="ok" />
-            <Stat label="Players" value={`${data.players} / ${data.max}`} />
-            <Stat label="Gamemode" value={data.gamemode || "—"} />
-            <Stat label="Map" value={data.map || "—"} />
-            <div className="sm:col-span-2">
-              <Stat label="Server name" value={data.name} />
-            </div>
-          </div>
-        )}
-        {data && !data.online && (
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-5">
-            <p className="font-semibold text-amber-200">Live player list unavailable</p>
-            <p className="mt-1 text-sm text-amber-100/80">{data.reason}</p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Individual player names require an MTA server-side script that pushes online players to this website via a webhook — MTA's game query runs over UDP and cannot be reached from the browser or this backend.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "ok" }) {
   return (
