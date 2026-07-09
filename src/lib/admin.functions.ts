@@ -81,36 +81,68 @@ export const moderateApplication = createServerFn({ method: "POST" })
     return { ok: true, status };
   });
 
-export type MtaStatus =
-  | { online: true; name: string; gamemode: string; map: string; players: number; max: number }
-  | { online: false; reason: string };
+export type AdminMember = {
+  discord_id: string;
+  created_at: string;
+  username: string | null;
+  global_name: string | null;
+  avatar_url: string | null;
+};
 
-export const getMtaStatus = createServerFn({ method: "GET" }).handler(async (): Promise<MtaStatus> => {
+export const listAdmins = createServerFn({ method: "GET" }).handler(async (): Promise<AdminMember[]> => {
   await requireAdmin();
-  const target = "92.119.165.177:9527";
-  try {
-    const res = await fetch("https://master.mtasa.com/ase/mta/", {
-      headers: { "User-Agent": "HorizonRP-Admin/1.0" },
-    });
-    if (!res.ok) return { online: false, reason: `Master list error ${res.status}` };
-    const text = await res.text();
-    // Master list returns records; look for our IP:port anywhere in a line.
-    for (const raw of text.split(/\r?\n/)) {
-      if (!raw.includes(target)) continue;
-      // Fields are pipe-separated with variable layout across mirrors; extract heuristically.
-      const parts = raw.split("|").map((s) => s.trim());
-      const nameIdx = parts.findIndex((p) => p && !p.includes(target));
-      const name = parts[nameIdx] ?? "Horizon Roleplay";
-      // players/max often appears as "N/M"
-      const pm = raw.match(/(\d+)\s*\/\s*(\d+)/);
-      const players = pm ? Number(pm[1]) : 0;
-      const max = pm ? Number(pm[2]) : 0;
-      const gamemode = parts[nameIdx + 1] ?? "";
-      const map = parts[nameIdx + 2] ?? "";
-      return { online: true, name, gamemode, map, players, max };
-    }
-    return { online: false, reason: "Server not listed on the MTA master list right now." };
-  } catch (err) {
-    return { online: false, reason: err instanceof Error ? err.message : "Unknown error" };
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: rows, error } = await supabaseAdmin
+    .from("admin_users")
+    .select("discord_id, created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const ids = (rows ?? []).map((r) => r.discord_id);
+  const profileById = new Map<string, { username: string; global_name: string | null; avatar: string | null }>();
+  if (ids.length > 0) {
+    const { data: profiles } = await supabaseAdmin
+      .from("discord_profiles")
+      .select("discord_id, username, global_name, avatar")
+      .in("discord_id", ids);
+    for (const p of profiles ?? [])
+      profileById.set(p.discord_id, { username: p.username, global_name: p.global_name, avatar: p.avatar });
   }
+
+  return (rows ?? []).map((r) => {
+    const p = profileById.get(r.discord_id);
+    return {
+      discord_id: r.discord_id,
+      created_at: r.created_at,
+      username: p?.username ?? null,
+      global_name: p?.global_name ?? null,
+      avatar_url: p?.avatar ? avatarUrl(r.discord_id, p.avatar) : null,
+    };
+  });
 });
+
+export const grantAdmin = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ discord_id: z.string().trim().regex(/^\d{5,32}$/, "Enter a valid Discord user ID (numeric)") }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("admin_users")
+      .upsert({ discord_id: data.discord_id }, { onConflict: "discord_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const revokeAdmin = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ discord_id: z.string() }).parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireAdmin();
+    if (data.discord_id === session.discord_id) throw new Error("You cannot revoke your own admin access.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("admin_users").delete().eq("discord_id", data.discord_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
