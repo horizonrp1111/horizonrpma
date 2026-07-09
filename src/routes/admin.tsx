@@ -28,7 +28,7 @@ export const Route = createFileRoute("/admin")({
   ),
 });
 
-type Tab = "pending" | "approved" | "denied" | "admins";
+type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "admins";
 
 function AdminPage() {
   const { data: me } = useSuspenseQuery(meOptions);
