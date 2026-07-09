@@ -214,3 +214,119 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "ok
     </div>
   );
 }
+
+function AdminsTab({ selfId }: { selfId: string }) {
+  const qc = useQueryClient();
+  const load = useServerFn(listAdmins);
+  const grant = useServerFn(grantAdmin);
+  const revoke = useServerFn(revokeAdmin);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["admin-members"],
+    queryFn: () => load(),
+  });
+  const [discordId, setDiscordId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
+
+  async function onGrant(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setFormErr(null);
+    try {
+      await grant({ data: { discord_id: discordId.trim() } });
+      setDiscordId("");
+      await qc.invalidateQueries({ queryKey: ["admin-members"] });
+    } catch (e) {
+      setFormErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onRevoke(id: string) {
+    setRowBusy(id);
+    try {
+      await revoke({ data: { discord_id: id } });
+      await qc.invalidateQueries({ queryKey: ["admin-members"] });
+    } catch (e) {
+      setFormErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setRowBusy(null);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <form
+        onSubmit={onGrant}
+        className="rounded-2xl border border-border/60 bg-card/50 p-5"
+      >
+        <h2 className="text-lg font-semibold">Grant administrator</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter the member's Discord user ID (right-click a Discord profile → Copy User ID with Developer Mode enabled).
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            value={discordId}
+            onChange={(e) => setDiscordId(e.target.value)}
+            placeholder="Discord user ID"
+            className="flex-1 rounded-lg border border-border/60 bg-background/60 px-3 py-2 font-mono text-sm outline-none focus:border-primary"
+            required
+          />
+          <button
+            type="submit"
+            disabled={busy || !discordId.trim()}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110 disabled:opacity-50"
+          >
+            {busy ? "Granting…" : "Grant admin"}
+          </button>
+        </div>
+        {formErr && <p className="mt-3 text-sm text-rose-400">{formErr}</p>}
+      </form>
+
+      <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+        <h2 className="text-lg font-semibold">Current administrators</h2>
+        {isLoading && <p className="mt-3 text-muted-foreground">Loading…</p>}
+        {isError && <p className="mt-3 text-rose-400">{(error as Error).message}</p>}
+        {data && data.length === 0 && (
+          <p className="mt-3 text-muted-foreground">No administrators yet.</p>
+        )}
+        {data && data.length > 0 && (
+          <ul className="mt-4 divide-y divide-border/40">
+            {data.map((m: AdminMember) => (
+              <li key={m.discord_id} className="flex flex-wrap items-center gap-4 py-3">
+                {m.avatar_url ? (
+                  <img src={m.avatar_url} alt="" className="h-10 w-10 rounded-full ring-2 ring-primary/40" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-bold">
+                    {(m.global_name || m.username || m.discord_id)[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold">
+                    {m.global_name || m.username || <span className="text-muted-foreground">Unknown user</span>}
+                    {m.discord_id === selfId && (
+                      <span className="ml-2 rounded-full border border-primary/50 bg-primary/10 px-2 py-0.5 text-xs uppercase tracking-wide text-primary-glow">
+                        You
+                      </span>
+                    )}
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground">ID {m.discord_id}</p>
+                </div>
+                <button
+                  onClick={() => onRevoke(m.discord_id)}
+                  disabled={rowBusy === m.discord_id || m.discord_id === selfId}
+                  className="rounded-lg bg-rose-500/90 px-3 py-1.5 text-sm font-semibold text-rose-950 hover:bg-rose-400 disabled:opacity-40"
+                  title={m.discord_id === selfId ? "You cannot revoke yourself" : "Revoke admin"}
+                >
+                  {rowBusy === m.discord_id ? "…" : "Revoke"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
