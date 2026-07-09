@@ -22,7 +22,7 @@ export type DashboardData = {
   } | null;
 };
 
-async function loadSession(): Promise<SessionData | null> {
+export async function loadSession(): Promise<SessionData | null> {
   const { getRequestHeader } = await import("@tanstack/react-start/server");
   const { readSessionCookie, verifySession } = await import("@/lib/session.server");
   const cookie = getRequestHeader("cookie") ?? null;
