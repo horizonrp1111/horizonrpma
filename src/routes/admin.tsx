@@ -126,7 +126,7 @@ function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied"
   return (
     <div className="grid gap-4">
       {data.map((app) => (
-        <ApplicationCard key={app.id} app={app} showActions={status === "pending"} />
+        <ApplicationCard key={app.id} app={app} showActions={status === "pending"} showRevoke={status === "approved"} />
       ))}
     </div>
   );
