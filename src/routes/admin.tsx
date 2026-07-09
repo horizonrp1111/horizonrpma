@@ -14,7 +14,6 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
-import { useServerFn as _useServerFn } from "@tanstack/react-start";
 import { listStaffApplications } from "@/lib/staff.functions";
 import { StaffCard } from "@/routes/staff";
 
@@ -120,7 +119,7 @@ function AdminTickets({ status }: { status: "open" | "closed" }) {
 
 function AdminStaffRequests({ status }: { status: "open" | "closed" }) {
   const qc = useQueryClient();
-  const load = _useServerFn(listStaffApplications);
+  const load = useServerFn(listStaffApplications);
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["staff-admin", status],
     queryFn: () => load({ data: { status } }),
