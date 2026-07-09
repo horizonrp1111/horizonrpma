@@ -100,34 +100,38 @@ async function sendDiscordDM(userId: string, content: string) {
   }
 }
 
-async function assignDiscordRole(userId: string, action: "approve" | "deny") {
+async function updateDiscordRoles(userId: string, addRoles: string[], removeRoles: string[]) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) {
     console.warn("DISCORD_BOT_TOKEN not set — skipping role assignment");
     return;
   }
-  const addRole = action === "approve" ? DISCORD_APPROVED_ROLE_ID : DISCORD_REJECTED_ROLE_ID;
-  const removeRole = action === "approve" ? DISCORD_REJECTED_ROLE_ID : DISCORD_APPROVED_ROLE_ID;
   const headers = { Authorization: `Bot ${token}`, "Content-Type": "application/json" };
   try {
-    const addRes = await fetch(
-      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${addRole}`,
-      { method: "PUT", headers },
-    );
-    if (!addRes.ok) {
-      console.error(`Discord role add failed [${addRes.status}]: ${await addRes.text()}`);
+    for (const roleId of addRoles) {
+      const res = await fetch(
+        `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+        { method: "PUT", headers },
+      );
+      if (!res.ok) console.error(`Discord role add failed [${res.status}]: ${await res.text()}`);
     }
-    // best-effort remove opposite role; ignore 404 (user didn't have it)
-    const rmRes = await fetch(
-      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${removeRole}`,
-      { method: "DELETE", headers },
-    );
-    if (!rmRes.ok && rmRes.status !== 404) {
-      console.error(`Discord role remove failed [${rmRes.status}]: ${await rmRes.text()}`);
+    for (const roleId of removeRoles) {
+      const res = await fetch(
+        `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${roleId}`,
+        { method: "DELETE", headers },
+      );
+      if (!res.ok && res.status !== 404)
+        console.error(`Discord role remove failed [${res.status}]: ${await res.text()}`);
     }
   } catch (e) {
-    console.error("Discord role assign error:", e);
+    console.error("Discord role update error:", e);
   }
+}
+
+async function assignDiscordRole(userId: string, action: "approve" | "deny") {
+  const add = action === "approve" ? DISCORD_APPROVED_ROLE_ID : DISCORD_REJECTED_ROLE_ID;
+  const remove = action === "approve" ? DISCORD_REJECTED_ROLE_ID : DISCORD_APPROVED_ROLE_ID;
+  await updateDiscordRoles(userId, [add], [remove, DISCORD_REVOKED_ROLE_ID]);
 }
 
 export const moderateApplication = createServerFn({ method: "POST" })
