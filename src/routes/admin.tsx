@@ -12,6 +12,7 @@ import {
   type AdminApplication,
   type AdminMember,
 } from "@/lib/admin.functions";
+import { TicketsList, TicketView } from "@/routes/support";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
