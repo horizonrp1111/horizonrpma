@@ -14,7 +14,7 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
-import { listStaffApplications } from "@/lib/staff.functions";
+import { getStaffRequestsOpen, listStaffApplications, setStaffRequestsOpen } from "@/lib/staff.functions";
 import { StaffCard } from "@/routes/staff";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
@@ -125,16 +125,69 @@ function AdminStaffRequests({ status }: { status: "pending" | "approved" }) {
     queryKey: ["staff-admin", status],
     queryFn: () => load({ data: { status } }),
   });
-  if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (isError) return <p className="text-rose-400">{(error as Error).message}</p>;
-  if (!data || data.length === 0)
-    return <p className="rounded-xl border border-border/60 bg-card/40 p-8 text-center text-muted-foreground">No {status} staff requests.</p>;
   return (
-    <ul className="grid gap-4">
-      {data.map((a) => (
-        <StaffCard key={a.id} app={a} adminControls onChanged={() => qc.invalidateQueries({ queryKey: ["staff-admin"] })} />
-      ))}
-    </ul>
+    <div className="space-y-4">
+      {status === "pending" && <StaffOpenToggle />}
+      {isLoading && <p className="text-muted-foreground">Loading…</p>}
+      {isError && <p className="text-rose-400">{(error as Error).message}</p>}
+      {data && data.length === 0 && (
+        <p className="rounded-xl border border-border/60 bg-card/40 p-8 text-center text-muted-foreground">No {status} staff requests.</p>
+      )}
+      {data && data.length > 0 && (
+        <ul className="grid gap-4">
+          {data.map((a) => (
+            <StaffCard key={a.id} app={a} adminControls onChanged={() => qc.invalidateQueries({ queryKey: ["staff-admin"] })} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function StaffOpenToggle() {
+  const qc = useQueryClient();
+  const loadOpen = useServerFn(getStaffRequestsOpen);
+  const setOpen = useServerFn(setStaffRequestsOpen);
+  const { data: open, isLoading } = useQuery({ queryKey: ["staff-requests-open"], queryFn: () => loadOpen() });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function toggle() {
+    setBusy(true);
+    setErr(null);
+    try {
+      await setOpen({ data: { open: !open } });
+      await qc.invalidateQueries({ queryKey: ["staff-requests-open"] });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/50 p-5">
+      <div>
+        <p className="text-sm font-semibold">Staff requests are {isLoading ? "…" : open ? "OPEN" : "CLOSED"}</p>
+        <p className="text-xs text-muted-foreground">
+          {open ? "Members can submit new staff requests." : "New submissions are disabled for members."}
+        </p>
+      </div>
+      <div className="flex flex-col items-end gap-1">
+        <button
+          onClick={toggle}
+          disabled={busy || isLoading}
+          className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-lg disabled:opacity-50 ${
+            open
+              ? "bg-rose-500/90 text-rose-950 shadow-rose-500/30 hover:bg-rose-400"
+              : "bg-emerald-500/90 text-emerald-950 shadow-emerald-500/30 hover:bg-emerald-400"
+          }`}
+        >
+          {busy ? "…" : open ? "Close staff requests" : "Open staff requests"}
+        </button>
+        {err && <p className="text-xs text-rose-400">{err}</p>}
+      </div>
+    </div>
   );
 }
 
