@@ -65,6 +65,68 @@ export type Database = {
         }
         Relationships: []
       }
+      support_ticket_messages: {
+        Row: {
+          author_discord_id: string
+          body: string
+          created_at: string
+          id: string
+          is_admin: boolean
+          ticket_id: string
+        }
+        Insert: {
+          author_discord_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          ticket_id: string
+        }
+        Update: {
+          author_discord_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_discord_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_discord_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_discord_id?: string
+        }
+        Relationships: []
+      }
       whitelist_applications: {
         Row: {
           age_irl: number
