@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { readSessionCookie, verifySession } from "@/lib/session.server";
+import { readSessionCookie, verifySession, type SessionData } from "@/lib/session.server";
 
 export type DashboardData = {
   profile: {
@@ -12,6 +12,7 @@ export type DashboardData = {
     email: string | null;
     linked_serial: string | null;
     avatar_url: string | null;
+    is_admin: boolean;
   } | null;
   application: {
     name_rp: string;
@@ -22,16 +23,26 @@ export type DashboardData = {
   } | null;
 };
 
-async function loadSession() {
+export async function loadSession(): Promise<SessionData | null> {
   const cookie = getRequestHeader("cookie") ?? null;
   const token = readSessionCookie(cookie);
   return verifySession(token);
 }
 
-function avatarUrl(discord_id: string, avatar: string | null): string | null {
+export function avatarUrl(discord_id: string, avatar: string | null): string | null {
   if (!avatar) return null;
   const ext = avatar.startsWith("a_") ? "gif" : "png";
   return `https://cdn.discordapp.com/avatars/${discord_id}/${avatar}.${ext}?size=256`;
+}
+
+export async function isAdminId(discord_id: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("admin_users")
+    .select("discord_id")
+    .eq("discord_id", discord_id)
+    .maybeSingle();
+  return !!data;
 }
 
 export const getDashboard = createServerFn({ method: "GET" }).handler(async (): Promise<DashboardData> => {
@@ -47,6 +58,9 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async (): 
 
   if (!profile) return { profile: null, application: null };
 
+  const is_admin = await isAdminId(profile.discord_id);
+
+  // Try by explicit link first, else fall back to any application submitted by this Discord account.
   let application: DashboardData["application"] = null;
   if (profile.linked_serial) {
     const { data: app } = await supabaseAdmin
@@ -58,9 +72,19 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async (): 
       .maybeSingle();
     application = app ?? null;
   }
+  if (!application) {
+    const { data: app } = await supabaseAdmin
+      .from("whitelist_applications")
+      .select("name_rp, age_rp, serial, status, created_at")
+      .eq("discord_id", profile.discord_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    application = app ?? null;
+  }
 
   return {
-    profile: { ...profile, avatar_url: avatarUrl(profile.discord_id, profile.avatar) },
+    profile: { ...profile, avatar_url: avatarUrl(profile.discord_id, profile.avatar), is_admin },
     application,
   };
 });

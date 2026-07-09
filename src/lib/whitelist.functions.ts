@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { loadSession } from "@/lib/account.functions";
 
 const schema = z.object({
   nameIrl: z.string().trim().min(2).max(80),
@@ -13,7 +14,22 @@ const schema = z.object({
 export const submitWhitelist = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => {
+    const session = await loadSession();
+    if (!session) throw new Error("You must be logged in with Discord to submit an application.");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: existing } = await supabaseAdmin
+      .from("whitelist_applications")
+      .select("id, status")
+      .eq("discord_id", session.discord_id)
+      .maybeSingle();
+    if (existing) {
+      throw new Error(
+        `You already have a whitelist application (status: ${existing.status}). Only one per Discord account.`,
+      );
+    }
+
     const { error: dbErr } = await supabaseAdmin.from("whitelist_applications").insert({
       name_irl: data.nameIrl,
       age_irl: data.ageIrl,
@@ -21,11 +37,19 @@ export const submitWhitelist = createServerFn({ method: "POST" })
       age_rp: data.ageRp,
       serial: data.serial,
       story: data.story,
+      discord_id: session.discord_id,
     });
     if (dbErr) {
+      if (dbErr.code === "23505") throw new Error("You already submitted a whitelist application.");
       console.error("Whitelist DB insert failed:", dbErr);
       throw new Error("Failed to save application");
     }
+
+    // Auto-link the serial to the Discord profile.
+    await supabaseAdmin
+      .from("discord_profiles")
+      .update({ linked_serial: data.serial })
+      .eq("discord_id", session.discord_id);
 
     const url = process.env.WHITELIST_WEBHOOK_URL;
     if (url) {
@@ -36,6 +60,7 @@ export const submitWhitelist = createServerFn({ method: "POST" })
             title: "New Whitelist Application",
             color: 0x7a2df0,
             fields: [
+              { name: "Discord ID", value: session.discord_id, inline: false },
               { name: "Name IRL", value: data.nameIrl, inline: true },
               { name: "Age IRL", value: String(data.ageIrl), inline: true },
               { name: "Name RP", value: data.nameRp, inline: true },
