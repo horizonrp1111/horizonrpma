@@ -65,19 +65,72 @@ export const listApplications = createServerFn({ method: "GET" })
     return fetchApplicationsByStatus(data.status);
   });
 
+async function sendDiscordDM(userId: string, content: string) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) {
+    console.warn("DISCORD_BOT_TOKEN not set — skipping DM");
+    return;
+  }
+  try {
+    const chRes = await fetch("https://discord.com/api/v10/users/@me/channels", {
+      method: "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient_id: userId }),
+    });
+    if (!chRes.ok) {
+      console.error(`Discord DM channel create failed [${chRes.status}]: ${await chRes.text()}`);
+      return;
+    }
+    const channel = (await chRes.json()) as { id: string };
+    const msgRes = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bot ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!msgRes.ok) {
+      console.error(`Discord DM send failed [${msgRes.status}]: ${await msgRes.text()}`);
+    }
+  } catch (e) {
+    console.error("Discord DM error:", e);
+  }
+}
+
 export const moderateApplication = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({ id: z.string().uuid(), action: z.enum(["approve", "deny"]) }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const admin = await requireAdmin();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const status = data.action === "approve" ? "approved" : "denied";
+
+    const { data: app, error: fetchErr } = await supabaseAdmin
+      .from("whitelist_applications")
+      .select("discord_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+
     const { error } = await supabaseAdmin
       .from("whitelist_applications")
       .update({ status })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    if (app?.discord_id) {
+      const { data: adminProfile } = await supabaseAdmin
+        .from("discord_profiles")
+        .select("username, global_name")
+        .eq("discord_id", admin.discord_id)
+        .maybeSingle();
+      const adminName = adminProfile?.global_name || adminProfile?.username || "an admin";
+      const message =
+        data.action === "approve"
+          ? `rak t9blti mn taraf ${adminName} dkhol o mar7ba bik 92.119.165.177:9527`
+          : `lil2assaf trfadti la kan 3ndk chi so2al 3la rafd 7ol ticket f server discord`;
+      await sendDiscordDM(app.discord_id, message);
+    }
+
     return { ok: true, status };
   });
 
