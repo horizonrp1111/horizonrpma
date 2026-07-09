@@ -42,6 +42,17 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          {profile?.is_admin && (
+            <Link
+              to="/admin"
+              className="hidden items-center gap-1.5 rounded-lg border border-amber-400/50 bg-amber-400/10 px-3 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-400/20 sm:inline-flex"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2 4 6v6c0 5 3.5 9.5 8 10 4.5-.5 8-5 8-10V6l-8-4z" />
+              </svg>
+              Admin
+            </Link>
+          )}
           {profile ? (
             <Link
               to="/dashboard"
