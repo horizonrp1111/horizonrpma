@@ -64,18 +64,26 @@ function StaffPage() {
         </p>
       </div>
 
-      {showNew ? (
+      {isOpen === false && (
+        <div className="mt-8 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-6 text-center">
+          <p className="text-lg font-semibold text-rose-200">Staff requests are currently closed</p>
+          <p className="mt-1 text-sm text-rose-100/80">Administrators haven't opened applications yet. Please check back later.</p>
+        </div>
+      )}
+      {isOpen && showNew ? (
         <NewStaffRequest onDone={() => setShowNew(false)} onCancel={() => setShowNew(false)} />
       ) : (
         <>
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setShowNew(true)}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
-            >
-              + New staff request
-            </button>
-          </div>
+          {isOpen && (
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowNew(true)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
+              >
+                + New staff request
+              </button>
+            </div>
+          )}
           <MyStaffList />
         </>
       )}
