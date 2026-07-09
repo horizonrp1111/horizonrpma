@@ -14,6 +14,9 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
+import { useServerFn as _useServerFn } from "@tanstack/react-start";
+import { listStaffApplications } from "@/lib/staff.functions";
+import { StaffCard } from "@/routes/staff";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
@@ -29,7 +32,7 @@ export const Route = createFileRoute("/admin")({
   ),
 });
 
-type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "admins";
+type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "staff-open" | "staff-closed" | "admins";
 
 function AdminPage() {
   const { data: me } = useSuspenseQuery(meOptions);
@@ -63,6 +66,8 @@ function AdminPage() {
     { id: "denied", label: "Rejected" },
     { id: "tickets-open", label: "Open tickets" },
     { id: "tickets-closed", label: "Closed tickets" },
+    { id: "staff-open", label: "Staff requests" },
+    { id: "staff-closed", label: "Closed staff requests" },
     { id: "admins", label: "Administrators" },
   ];
 
@@ -97,6 +102,8 @@ function AdminPage() {
           <AdminsTab selfId={me.profile.discord_id} />
         ) : tab === "tickets-open" || tab === "tickets-closed" ? (
           <AdminTickets status={tab === "tickets-open" ? "open" : "closed"} />
+        ) : tab === "staff-open" || tab === "staff-closed" ? (
+          <AdminStaffRequests status={tab === "staff-open" ? "open" : "closed"} />
         ) : (
           <ApplicationsTab status={tab} />
         )}
