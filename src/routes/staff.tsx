@@ -5,11 +5,10 @@ import { useState } from "react";
 import { getDashboard } from "@/lib/account.functions";
 import {
   createStaffApplication,
-  getStaffRequestsOpen,
   listMyStaffApplications,
-  listStaffApplications,
-  setStaffApplicationStatus,
+  moderateStaffApplication,
   type StaffApplication,
+  type StaffStatus,
 } from "@/lib/staff.functions";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
@@ -33,8 +32,6 @@ export const Route = createFileRoute("/staff")({
 
 function StaffPage() {
   const { data: me } = useSuspenseQuery(meOptions);
-  const loadOpen = useServerFn(getStaffRequestsOpen);
-  const { data: isOpen } = useQuery({ queryKey: ["staff-open-flag"], queryFn: () => loadOpen() });
   const [showNew, setShowNew] = useState(false);
 
   if (!me.profile) {
@@ -64,26 +61,18 @@ function StaffPage() {
         </p>
       </div>
 
-      {isOpen === false && (
-        <div className="mt-8 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-6 text-center">
-          <p className="text-lg font-semibold text-rose-200">Staff requests are currently closed</p>
-          <p className="mt-1 text-sm text-rose-100/80">Administrators haven't opened applications yet. Please check back later.</p>
-        </div>
-      )}
-      {isOpen && showNew ? (
+      {showNew ? (
         <NewStaffRequest onDone={() => setShowNew(false)} onCancel={() => setShowNew(false)} />
       ) : (
         <>
-          {isOpen && (
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowNew(true)}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
-              >
-                + New staff request
-              </button>
-            </div>
-          )}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={() => setShowNew(true)}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110"
+            >
+              + New staff request
+            </button>
+          </div>
           <MyStaffList />
         </>
       )}
@@ -118,7 +107,7 @@ function NewStaffRequest({ onDone, onCancel }: { onDone: () => void; onCancel: (
   return (
     <form onSubmit={submit} className="mt-8 space-y-4 rounded-2xl border border-border/60 bg-card/60 p-8 backdrop-blur-sm">
       <h2 className="text-2xl font-bold">Apply to join the staff team</h2>
-      <p className="text-sm text-muted-foreground">You can only have one open staff request at a time.</p>
+      <p className="text-sm text-muted-foreground">You can only have one pending staff request at a time.</p>
       <Field label="Experience" value={experience} onChange={setExperience} placeholder="Previous staff experience, communities, moderation, tooling, etc." />
       <Field label="Why do you want to join our team?" value={whyJoin} onChange={setWhyJoin} placeholder="Tell us what draws you to Horizon RP." />
       <Field label="How can you help the server?" value={howHelp} onChange={setHowHelp} placeholder="Skills, availability, ideas, initiatives you'd bring." />
@@ -180,6 +169,12 @@ function MyStaffList() {
   );
 }
 
+function statusBadge(status: StaffStatus) {
+  if (status === "approved") return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+  if (status === "denied") return "bg-rose-500/20 text-rose-300 border-rose-500/40";
+  return "bg-amber-500/20 text-amber-200 border-amber-500/40";
+}
+
 export function StaffCard({
   app,
   adminControls,
@@ -189,25 +184,25 @@ export function StaffCard({
   adminControls?: boolean;
   onChanged?: () => void;
 }) {
-  const setStatus = useServerFn(setStaffApplicationStatus);
-  const [busy, setBusy] = useState(false);
+  const moderate = useServerFn(moderateStaffApplication);
+  const [busy, setBusy] = useState<null | "approve" | "deny">(null);
   const [err, setErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const badge =
-    app.status === "open"
-      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-      : "bg-slate-500/20 text-slate-300 border-slate-500/40";
+  const [declining, setDeclining] = useState(false);
+  const [reason, setReason] = useState("");
 
-  async function toggle(next: "open" | "closed") {
-    setBusy(true);
+  async function act(action: "approve" | "deny", reasonText?: string | null) {
+    setBusy(action);
     setErr(null);
     try {
-      await setStatus({ data: { id: app.id, status: next } });
+      await moderate({ data: { id: app.id, action, reason: reasonText ?? null } });
+      setDeclining(false);
+      setReason("");
       onChanged?.();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -224,39 +219,85 @@ export function StaffCard({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-semibold">{app.user_global_name || app.user_username || app.user_discord_id}</p>
-            <span className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-wide ${badge}`}>{app.status}</span>
+            <span className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-wide ${statusBadge(app.status)}`}>{app.status}</span>
           </div>
           <p className="text-xs text-muted-foreground">
             Submitted {new Date(app.created_at).toLocaleString()} · ID <span className="font-mono">{app.user_discord_id}</span>
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setExpanded((v) => !v)}
             className="rounded-lg border border-border/60 px-3 py-1.5 text-sm hover:bg-background/60"
           >
             {expanded ? "Hide" : "View"} answers
           </button>
-          {adminControls && app.status === "open" && (
-            <button
-              onClick={() => toggle("closed")}
-              disabled={busy}
-              className="rounded-lg bg-rose-500/90 px-3 py-1.5 text-sm font-semibold text-rose-950 hover:bg-rose-400 disabled:opacity-50"
-            >
-              {busy ? "…" : "Close request"}
-            </button>
-          )}
-          {adminControls && app.status === "closed" && (
-            <button
-              onClick={() => toggle("open")}
-              disabled={busy}
-              className="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-50"
-            >
-              {busy ? "…" : "Reopen"}
-            </button>
+          {adminControls && app.status === "pending" && !declining && (
+            <>
+              <button
+                onClick={() => act("approve")}
+                disabled={!!busy}
+                className="rounded-lg bg-emerald-500/90 px-3 py-1.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-50"
+              >
+                {busy === "approve" ? "…" : "Accept"}
+              </button>
+              <button
+                onClick={() => act("deny", null)}
+                disabled={!!busy}
+                className="rounded-lg bg-rose-500/90 px-3 py-1.5 text-sm font-semibold text-rose-950 hover:bg-rose-400 disabled:opacity-50"
+              >
+                {busy === "deny" ? "…" : "Decline"}
+              </button>
+              <button
+                onClick={() => setDeclining(true)}
+                disabled={!!busy}
+                className="rounded-lg border border-rose-500/60 px-3 py-1.5 text-sm font-semibold text-rose-200 hover:bg-rose-500/10 disabled:opacity-50"
+              >
+                Decline with reason
+              </button>
+            </>
           )}
         </div>
       </div>
+
+      {adminControls && declining && (
+        <div className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/5 p-4">
+          <label className="mb-1.5 block text-sm font-medium">Reason (sent to member via Discord DM)</label>
+          <textarea
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            maxLength={1000}
+            placeholder="Explain why this request is being declined."
+            className="w-full rounded-lg border border-border bg-input/40 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/40"
+          />
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => act("deny", reason)}
+              disabled={!!busy || reason.trim().length < 3}
+              className="rounded-lg bg-rose-500/90 px-4 py-1.5 text-sm font-semibold text-rose-950 hover:bg-rose-400 disabled:opacity-50"
+            >
+              {busy === "deny" ? "Sending…" : "Send decline"}
+            </button>
+            <button
+              onClick={() => {
+                setDeclining(false);
+                setReason("");
+              }}
+              className="rounded-lg border border-border/60 px-4 py-1.5 text-sm hover:bg-background/60"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {app.status === "denied" && app.decline_reason && (
+        <p className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm">
+          <span className="font-semibold text-rose-200">Decline reason:</span> {app.decline_reason}
+        </p>
+      )}
+
       {expanded && (
         <div className="mt-4 grid gap-3">
           <Answer title="Experience" body={app.experience} />
