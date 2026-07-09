@@ -69,6 +69,7 @@ const DISCORD_GUILD_ID = "1479830584997052489";
 const DISCORD_APPROVED_ROLE_ID = "1479877357463666950";
 const DISCORD_REJECTED_ROLE_ID = "1521613631878332526";
 const DISCORD_REVOKED_ROLE_ID = "1523668523904405727";
+const DISCORD_ADMIN_ROLE_ID = "1479853701664477295";
 
 async function sendDiscordDM(userId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -265,6 +266,7 @@ export const grantAdmin = createServerFn({ method: "POST" })
       .from("admin_users")
       .upsert({ discord_id: data.discord_id }, { onConflict: "discord_id" });
     if (error) throw new Error(error.message);
+    await updateDiscordRoles(data.discord_id, [DISCORD_ADMIN_ROLE_ID], []);
     return { ok: true };
   });
 
@@ -276,6 +278,7 @@ export const revokeAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("admin_users").delete().eq("discord_id", data.discord_id);
     if (error) throw new Error(error.message);
+    await updateDiscordRoles(data.discord_id, [], [DISCORD_ADMIN_ROLE_ID]);
     return { ok: true };
   });
 
