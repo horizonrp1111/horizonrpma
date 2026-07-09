@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import logo from "@/assets/logo.png";
+import logoAsset from "@/assets/horizon-logo.png.asset.json";
+const logo = logoAsset.url;
 import { getDashboard } from "@/lib/account.functions";
 
 const nav = [
