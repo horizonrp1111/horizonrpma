@@ -155,3 +155,8 @@
   animation: fade-up 0.9s ease-out both;
 }
 
+
+
+/* Hide Lovable badge */
+#lovable-badge, [id="lovable-badge"] { display: none !important; }
+
