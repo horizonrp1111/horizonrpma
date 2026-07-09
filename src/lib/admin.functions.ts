@@ -266,6 +266,7 @@ export const grantAdmin = createServerFn({ method: "POST" })
       .from("admin_users")
       .upsert({ discord_id: data.discord_id }, { onConflict: "discord_id" });
     if (error) throw new Error(error.message);
+    await updateDiscordRoles(data.discord_id, [DISCORD_ADMIN_ROLE_ID], []);
     return { ok: true };
   });
 
@@ -277,6 +278,7 @@ export const revokeAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("admin_users").delete().eq("discord_id", data.discord_id);
     if (error) throw new Error(error.message);
+    await updateDiscordRoles(data.discord_id, [], [DISCORD_ADMIN_ROLE_ID]);
     return { ok: true };
   });
 
