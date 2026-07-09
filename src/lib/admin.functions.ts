@@ -163,6 +163,7 @@ export const moderateApplication = createServerFn({ method: "POST" })
           ? `rak t9blti mn taraf ${adminName} dkhol o mar7ba bik 92.119.165.177:9527`
           : `lil2assaf trfadti la kan 3ndk chi so2al 3la rafd 7ol ticket f server discord`;
       await sendDiscordDM(app.discord_id, message);
+      await assignDiscordRole(app.discord_id, data.action);
     }
 
     return { ok: true, status };
