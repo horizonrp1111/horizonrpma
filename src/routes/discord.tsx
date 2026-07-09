@@ -24,7 +24,7 @@ function DiscordPage() {
           Connect with the community, get server news, participate in events, and reach out to staff.
         </p>
         <a
-          href="https://discord.gg/horizonrp"
+          href="https://discord.gg/Gzr86w3sBm"
           target="_blank"
           rel="noreferrer"
           className="mt-8 inline-block rounded-lg bg-[#5865F2] px-10 py-4 text-lg font-semibold text-white shadow-[0_15px_40px_-10px_rgba(88,101,242,0.7)] transition-transform hover:scale-105"
