@@ -108,6 +108,13 @@ export const createStaffApplication = createServerFn({ method: "POST" })
     if (!session) throw new Error("You must be logged in to submit a staff request.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { data: settings } = await supabaseAdmin
+      .from("site_settings")
+      .select("staff_requests_open")
+      .eq("id", true)
+      .maybeSingle();
+    if (!settings?.staff_requests_open) throw new Error("Staff requests are currently closed.");
+
     const { data: existing } = await supabaseAdmin
       .from("staff_applications")
       .select("id")
