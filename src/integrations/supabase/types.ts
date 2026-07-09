@@ -86,6 +86,7 @@ export type Database = {
       staff_applications: {
         Row: {
           created_at: string
+          decline_reason: string | null
           experience: string
           how_help: string
           id: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decline_reason?: string | null
           experience: string
           how_help: string
           id?: string
@@ -106,6 +108,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decline_reason?: string | null
           experience?: string
           how_help?: string
           id?: string
