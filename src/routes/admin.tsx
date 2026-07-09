@@ -104,6 +104,12 @@ function AdminPage() {
   );
 }
 
+function AdminTickets({ status }: { status: "open" | "closed" }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (openId) return <TicketView id={openId} onBack={() => setOpenId(null)} />;
+  return <TicketsList mode="all" status={status} onOpen={setOpenId} />;
+}
+
 function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {
   const load = useServerFn(listApplications);
   const { data, isLoading, isError, error } = useQuery({
