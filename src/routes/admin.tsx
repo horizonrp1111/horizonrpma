@@ -80,7 +80,7 @@ function AdminPage() {
       </div>
 
       <div className="mt-8">
-        {tab === "mta" ? <MtaTab /> : <ApplicationsTab status={tab} />}
+        <ApplicationsTab status={tab} />
       </div>
     </section>
   );
