@@ -12,6 +12,7 @@ import {
   type AdminApplication,
   type AdminMember,
 } from "@/lib/admin.functions";
+import { TicketsList, TicketView } from "@/routes/support";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
 
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/admin")({
   ),
 });
 
-type Tab = "pending" | "approved" | "denied" | "admins";
+type Tab = "pending" | "approved" | "denied" | "tickets-open" | "tickets-closed" | "admins";
 
 function AdminPage() {
   const { data: me } = useSuspenseQuery(meOptions);
@@ -59,6 +60,8 @@ function AdminPage() {
     { id: "pending", label: "Pending" },
     { id: "approved", label: "Whitelisted" },
     { id: "denied", label: "Rejected" },
+    { id: "tickets-open", label: "Open tickets" },
+    { id: "tickets-closed", label: "Closed tickets" },
     { id: "admins", label: "Administrators" },
   ];
 
@@ -91,12 +94,20 @@ function AdminPage() {
       <div className="mt-8">
         {tab === "admins" ? (
           <AdminsTab selfId={me.profile.discord_id} />
+        ) : tab === "tickets-open" || tab === "tickets-closed" ? (
+          <AdminTickets status={tab === "tickets-open" ? "open" : "closed"} />
         ) : (
           <ApplicationsTab status={tab} />
         )}
       </div>
     </section>
   );
+}
+
+function AdminTickets({ status }: { status: "open" | "closed" }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (openId) return <TicketView id={openId} onBack={() => setOpenId(null)} />;
+  return <TicketsList mode="all" status={status} onOpen={setOpenId} />;
 }
 
 function ApplicationsTab({ status }: { status: "pending" | "approved" | "denied" }) {

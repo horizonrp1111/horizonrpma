@@ -10,6 +10,7 @@ const nav = [
   { to: "/rules", label: "Rules" },
   { to: "/whitelist", label: "Whitelist" },
   { to: "/discord", label: "Discord" },
+  { to: "/support", label: "Support" },
 ] as const;
 
 export function SiteHeader() {
