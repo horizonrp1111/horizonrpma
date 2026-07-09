@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      discord_profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          discord_id: string
+          email: string | null
+          global_name: string | null
+          id: string
+          linked_serial: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          discord_id: string
+          email?: string | null
+          global_name?: string | null
+          id?: string
+          linked_serial?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          discord_id?: string
+          email?: string | null
+          global_name?: string | null
+          id?: string
+          linked_serial?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      whitelist_applications: {
+        Row: {
+          age_irl: number
+          age_rp: number
+          created_at: string
+          discord_id: string | null
+          id: string
+          name_irl: string
+          name_rp: string
+          serial: string
+          status: string
+          story: string
+          updated_at: string
+        }
+        Insert: {
+          age_irl: number
+          age_rp: number
+          created_at?: string
+          discord_id?: string | null
+          id?: string
+          name_irl: string
+          name_rp: string
+          serial: string
+          status?: string
+          story: string
+          updated_at?: string
+        }
+        Update: {
+          age_irl?: number
+          age_rp?: number
+          created_at?: string
+          discord_id?: string | null
+          id?: string
+          name_irl?: string
+          name_rp?: string
+          serial?: string
+          status?: string
+          story?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
