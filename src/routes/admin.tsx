@@ -14,7 +14,7 @@ import {
   type AdminMember,
 } from "@/lib/admin.functions";
 import { TicketsList, TicketView } from "@/routes/support";
-import { listStaffApplications } from "@/lib/staff.functions";
+import { getStaffRequestsOpen, listStaffApplications, setStaffRequestsOpen } from "@/lib/staff.functions";
 import { StaffCard } from "@/routes/staff";
 
 const meOptions = queryOptions({ queryKey: ["dashboard"], queryFn: () => getDashboard() });
