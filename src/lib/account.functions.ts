@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { readSessionCookie, verifySession, type SessionData } from "@/lib/session.server";
+import type { SessionData } from "@/lib/session.server";
 
 export type DashboardData = {
   profile: {
@@ -24,6 +23,8 @@ export type DashboardData = {
 };
 
 export async function loadSession(): Promise<SessionData | null> {
+  const { getRequestHeader } = await import("@tanstack/react-start/server");
+  const { readSessionCookie, verifySession } = await import("@/lib/session.server");
   const cookie = getRequestHeader("cookie") ?? null;
   const token = readSessionCookie(cookie);
   return verifySession(token);
