@@ -68,6 +68,7 @@ export const listApplications = createServerFn({ method: "GET" })
 const DISCORD_GUILD_ID = "1479830584997052489";
 const DISCORD_APPROVED_ROLE_ID = "1479877357463666950";
 const DISCORD_REJECTED_ROLE_ID = "1521613631878332526";
+const DISCORD_REVOKED_ROLE_ID = "1523668523904405727";
 
 async function sendDiscordDM(userId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
