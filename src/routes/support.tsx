@@ -183,10 +183,10 @@ export function TicketsList({
   onOpen: (id: string) => void;
 }) {
   const loadMine = useServerFn(listMyTickets);
+  const loadAll = useServerFn(listAllTickets);
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["tickets", mode, status],
-    queryFn: () => loadMine({ data: { status } }),
-    enabled: mode === "mine",
+    queryFn: () => (mode === "all" ? loadAll({ data: { status } }) : loadMine({ data: { status } })),
   });
 
   if (isLoading) return <p className="mt-8 text-muted-foreground">Loading…</p>;
