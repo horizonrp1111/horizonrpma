@@ -174,6 +174,46 @@ export const moderateApplication = createServerFn({ method: "POST" })
     return { ok: true, status };
   });
 
+export const revokeWhitelist = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: app, error: fetchErr } = await supabaseAdmin
+      .from("whitelist_applications")
+      .select("discord_id, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!app) throw new Error("Application not found");
+    if (app.status !== "approved") throw new Error("Only whitelisted members can be revoked.");
+
+    const { error: delErr } = await supabaseAdmin
+      .from("whitelist_applications")
+      .delete()
+      .eq("id", data.id);
+    if (delErr) throw new Error(delErr.message);
+
+    if (app.discord_id) {
+      await supabaseAdmin
+        .from("discord_profiles")
+        .update({ linked_serial: null })
+        .eq("discord_id", app.discord_id);
+      await sendDiscordDM(
+        app.discord_id,
+        `tm sa7b mnk lwhitelist. la kan 3ndk chi so2al 7ol ticket f server discord.`,
+      );
+      await updateDiscordRoles(
+        app.discord_id,
+        [DISCORD_REVOKED_ROLE_ID],
+        [DISCORD_APPROVED_ROLE_ID, DISCORD_REJECTED_ROLE_ID],
+      );
+    }
+
+    return { ok: true };
+  });
+
 export type AdminMember = {
   discord_id: string;
   created_at: string;
