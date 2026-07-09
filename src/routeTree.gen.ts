@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhitelistRouteImport } from './routes/whitelist'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as DiscordRouteImport } from './routes/discord'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
+import { Route as ApiAuthDiscordRouteImport } from './routes/api/auth/discord'
+import { Route as ApiAuthDiscordCallbackRouteImport } from './routes/api/auth/discord.callback'
 
 const WhitelistRoute = WhitelistRouteImport.update({
   id: '/whitelist',
@@ -30,6 +34,11 @@ const DiscordRoute = DiscordRouteImport.update({
   path: '/discord',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -40,43 +49,101 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
+  id: '/api/auth/logout',
+  path: '/api/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthDiscordRoute = ApiAuthDiscordRouteImport.update({
+  id: '/api/auth/discord',
+  path: '/api/auth/discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthDiscordCallbackRoute = ApiAuthDiscordCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthDiscordRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
+  '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/discord/callback': typeof ApiAuthDiscordCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
+  '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/discord/callback': typeof ApiAuthDiscordCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
   '/whitelist': typeof WhitelistRoute
+  '/api/auth/discord': typeof ApiAuthDiscordRouteWithChildren
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/discord/callback': typeof ApiAuthDiscordCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/discord' | '/rules' | '/whitelist'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/dashboard'
+    | '/discord'
+    | '/rules'
+    | '/whitelist'
+    | '/api/auth/discord'
+    | '/api/auth/logout'
+    | '/api/auth/discord/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/discord' | '/rules' | '/whitelist'
-  id: '__root__' | '/' | '/about' | '/discord' | '/rules' | '/whitelist'
+  to:
+    | '/'
+    | '/about'
+    | '/dashboard'
+    | '/discord'
+    | '/rules'
+    | '/whitelist'
+    | '/api/auth/discord'
+    | '/api/auth/logout'
+    | '/api/auth/discord/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/dashboard'
+    | '/discord'
+    | '/rules'
+    | '/whitelist'
+    | '/api/auth/discord'
+    | '/api/auth/logout'
+    | '/api/auth/discord/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  DashboardRoute: typeof DashboardRoute
   DiscordRoute: typeof DiscordRoute
   RulesRoute: typeof RulesRoute
   WhitelistRoute: typeof WhitelistRoute
+  ApiAuthDiscordRoute: typeof ApiAuthDiscordRouteWithChildren
+  ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -116,15 +190,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/logout': {
+      id: '/api/auth/logout'
+      path: '/api/auth/logout'
+      fullPath: '/api/auth/logout'
+      preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/discord': {
+      id: '/api/auth/discord'
+      path: '/api/auth/discord'
+      fullPath: '/api/auth/discord'
+      preLoaderRoute: typeof ApiAuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/discord/callback': {
+      id: '/api/auth/discord/callback'
+      path: '/callback'
+      fullPath: '/api/auth/discord/callback'
+      preLoaderRoute: typeof ApiAuthDiscordCallbackRouteImport
+      parentRoute: typeof ApiAuthDiscordRoute
+    }
   }
 }
+
+interface ApiAuthDiscordRouteChildren {
+  ApiAuthDiscordCallbackRoute: typeof ApiAuthDiscordCallbackRoute
+}
+
+const ApiAuthDiscordRouteChildren: ApiAuthDiscordRouteChildren = {
+  ApiAuthDiscordCallbackRoute: ApiAuthDiscordCallbackRoute,
+}
+
+const ApiAuthDiscordRouteWithChildren = ApiAuthDiscordRoute._addFileChildren(
+  ApiAuthDiscordRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  DashboardRoute: DashboardRoute,
   DiscordRoute: DiscordRoute,
   RulesRoute: RulesRoute,
   WhitelistRoute: WhitelistRoute,
+  ApiAuthDiscordRoute: ApiAuthDiscordRouteWithChildren,
+  ApiAuthLogoutRoute: ApiAuthLogoutRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

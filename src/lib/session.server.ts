@@ -43,15 +43,17 @@ export async function verifySession(token: string | undefined | null): Promise<S
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
   const key = await getKey();
+  const sigBytes = b64urlDecode(sig);
   const ok = await crypto.subtle.verify(
     "HMAC",
     key,
-    b64urlDecode(sig),
+    sigBytes.buffer.slice(sigBytes.byteOffset, sigBytes.byteOffset + sigBytes.byteLength) as ArrayBuffer,
     new TextEncoder().encode(body),
   );
   if (!ok) return null;
   try {
-    const data = JSON.parse(new TextDecoder().decode(b64urlDecode(body))) as SessionData;
+    const bodyBytes = b64urlDecode(body);
+    const data = JSON.parse(new TextDecoder().decode(bodyBytes)) as SessionData;
     if (!data.discord_id || !data.exp || data.exp < Date.now()) return null;
     return data;
   } catch {
