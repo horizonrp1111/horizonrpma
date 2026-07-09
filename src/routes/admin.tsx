@@ -9,6 +9,7 @@ import {
   listApplications,
   moderateApplication,
   revokeAdmin,
+  revokeWhitelist,
   type AdminApplication,
   type AdminMember,
 } from "@/lib/admin.functions";
