@@ -65,6 +65,10 @@ export const listApplications = createServerFn({ method: "GET" })
     return fetchApplicationsByStatus(data.status);
   });
 
+const DISCORD_GUILD_ID = "1479830584997052489";
+const DISCORD_APPROVED_ROLE_ID = "1479877357463666950";
+const DISCORD_REJECTED_ROLE_ID = "1521613631878332526";
+
 async function sendDiscordDM(userId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) {
@@ -92,6 +96,36 @@ async function sendDiscordDM(userId: string, content: string) {
     }
   } catch (e) {
     console.error("Discord DM error:", e);
+  }
+}
+
+async function assignDiscordRole(userId: string, action: "approve" | "deny") {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) {
+    console.warn("DISCORD_BOT_TOKEN not set — skipping role assignment");
+    return;
+  }
+  const addRole = action === "approve" ? DISCORD_APPROVED_ROLE_ID : DISCORD_REJECTED_ROLE_ID;
+  const removeRole = action === "approve" ? DISCORD_REJECTED_ROLE_ID : DISCORD_APPROVED_ROLE_ID;
+  const headers = { Authorization: `Bot ${token}`, "Content-Type": "application/json" };
+  try {
+    const addRes = await fetch(
+      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${addRole}`,
+      { method: "PUT", headers },
+    );
+    if (!addRes.ok) {
+      console.error(`Discord role add failed [${addRes.status}]: ${await addRes.text()}`);
+    }
+    // best-effort remove opposite role; ignore 404 (user didn't have it)
+    const rmRes = await fetch(
+      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${userId}/roles/${removeRole}`,
+      { method: "DELETE", headers },
+    );
+    if (!rmRes.ok && rmRes.status !== 404) {
+      console.error(`Discord role remove failed [${rmRes.status}]: ${await rmRes.text()}`);
+    }
+  } catch (e) {
+    console.error("Discord role assign error:", e);
   }
 }
 
