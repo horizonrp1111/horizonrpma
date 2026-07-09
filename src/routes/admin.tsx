@@ -94,6 +94,8 @@ function AdminPage() {
       <div className="mt-8">
         {tab === "admins" ? (
           <AdminsTab selfId={me.profile.discord_id} />
+        ) : tab === "tickets-open" || tab === "tickets-closed" ? (
+          <AdminTickets status={tab === "tickets-open" ? "open" : "closed"} />
         ) : (
           <ApplicationsTab status={tab} />
         )}
