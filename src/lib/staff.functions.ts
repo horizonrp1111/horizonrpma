@@ -50,6 +50,28 @@ function decorate(row: any, profile: { username: string; global_name: string | n
   };
 }
 
+export const getStaffRequestsOpen = createServerFn({ method: "GET" }).handler(async (): Promise<boolean> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("site_settings").select("staff_requests_open").eq("id", true).maybeSingle();
+  return !!data?.staff_requests_open;
+});
+
+export const setStaffRequestsOpen = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ open: z.boolean() }).parse(data))
+  .handler(async ({ data }) => {
+    const session = await loadSession();
+    if (!session) throw new Error("Not authenticated");
+    if (!(await isAdminId(session.discord_id))) throw new Error("Administrator access required");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("site_settings")
+      .update({ staff_requests_open: data.open, updated_at: new Date().toISOString() })
+      .eq("id", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
 export const listMyStaffApplications = createServerFn({ method: "GET" }).handler(async (): Promise<StaffApplication[]> => {
   const session = await loadSession();
   if (!session) throw new Error("Not authenticated");
