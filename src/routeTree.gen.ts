@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhitelistRouteImport } from './routes/whitelist'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -35,6 +36,11 @@ const SupportRoute = SupportRouteImport.update({
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RulesRoute = RulesRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/shop': typeof ShopRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/shop': typeof ShopRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/discord': typeof DiscordRoute
   '/rules': typeof RulesRoute
+  '/shop': typeof ShopRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/whitelist': typeof WhitelistRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/shop'
     | '/staff'
     | '/support'
     | '/whitelist'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/shop'
     | '/staff'
     | '/support'
     | '/whitelist'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/discord'
     | '/rules'
+    | '/shop'
     | '/staff'
     | '/support'
     | '/whitelist'
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DiscordRoute: typeof DiscordRoute
   RulesRoute: typeof RulesRoute
+  ShopRoute: typeof ShopRoute
   StaffRoute: typeof StaffRoute
   SupportRoute: typeof SupportRoute
   WhitelistRoute: typeof WhitelistRoute
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rules': {
@@ -293,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DiscordRoute: DiscordRoute,
   RulesRoute: RulesRoute,
+  ShopRoute: ShopRoute,
   StaffRoute: StaffRoute,
   SupportRoute: SupportRoute,
   WhitelistRoute: WhitelistRoute,
