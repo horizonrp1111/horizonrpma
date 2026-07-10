@@ -59,16 +59,35 @@ function AdminPage() {
     );
   }
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "pending", label: "Pending" },
-    { id: "approved", label: "Whitelisted" },
-    { id: "denied", label: "Rejected" },
-    { id: "tickets-open", label: "Open tickets" },
-    { id: "tickets-closed", label: "Closed tickets" },
-    { id: "staff-pending", label: "Staff requests" },
-    { id: "staff-approved", label: "Approved staff" },
-    { id: "admins", label: "Administrators" },
+  const groups: { label: string; items: { id: Tab; label: string }[] }[] = [
+    {
+      label: "Whitelist",
+      items: [
+        { id: "pending", label: "Pending" },
+        { id: "approved", label: "Whitelisted" },
+        { id: "denied", label: "Rejected" },
+      ],
+    },
+    {
+      label: "Tickets",
+      items: [
+        { id: "tickets-open", label: "Open tickets" },
+        { id: "tickets-closed", label: "Closed tickets" },
+      ],
+    },
+    {
+      label: "Staff",
+      items: [
+        { id: "staff-pending", label: "Staff requests" },
+        { id: "staff-approved", label: "Approved staff" },
+      ],
+    },
+    {
+      label: "Administrators",
+      items: [{ id: "admins", label: "Administrators" }],
+    },
   ];
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
@@ -81,19 +100,54 @@ function AdminPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-              tab === t.id
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                : "border border-border/60 bg-card/40 hover:bg-card/70"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        {groups.map((g) => {
+          const active = g.items.some((i) => i.id === tab);
+          const isOpen = openGroup === g.label;
+          const single = g.items.length === 1;
+          return (
+            <div key={g.label} className="relative">
+              <button
+                onClick={() => {
+                  if (single) {
+                    setTab(g.items[0].id);
+                    setOpenGroup(null);
+                  } else {
+                    setOpenGroup(isOpen ? null : g.label);
+                  }
+                }}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                    : "border border-border/60 bg-card/40 hover:bg-card/70"
+                }`}
+              >
+                {g.label}
+                {!single && <span className="ml-2 text-xs opacity-70">▾</span>}
+              </button>
+              {!single && isOpen && (
+                <div
+                  className="absolute left-0 top-full z-20 mt-2 min-w-[200px] overflow-hidden rounded-lg border border-border/60 bg-card shadow-xl"
+                  onMouseLeave={() => setOpenGroup(null)}
+                >
+                  {g.items.map((i) => (
+                    <button
+                      key={i.id}
+                      onClick={() => {
+                        setTab(i.id);
+                        setOpenGroup(null);
+                      }}
+                      className={`block w-full px-4 py-2 text-left text-sm transition ${
+                        tab === i.id ? "bg-primary/20 text-primary-glow" : "hover:bg-background/60"
+                      }`}
+                    >
+                      {i.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-8">
