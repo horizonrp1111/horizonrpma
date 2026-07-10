@@ -138,9 +138,12 @@ function ShopPage() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-6 rounded-lg bg-primary py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110">
-                  Buy {m.name}
-                </button>
+                <Link
+                  to="/support"
+                  className="mt-6 rounded-lg bg-primary py-3 text-center font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110"
+                >
+                  Open Ticket to Buy
+                </Link>
               </div>
             ))}
           </div>
