@@ -138,9 +138,12 @@ function ShopPage() {
                     </li>
                   ))}
                 </ul>
-                <button className="mt-6 rounded-lg bg-primary py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110">
-                  Buy {m.name}
-                </button>
+                <Link
+                  to="/support"
+                  className="mt-6 rounded-lg bg-primary py-3 text-center font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110"
+                >
+                  Open Ticket to Buy
+                </Link>
               </div>
             ))}
           </div>
@@ -190,9 +193,12 @@ function ShopPage() {
                 <div className="text-5xl">💵</div>
                 <h3 className="mt-4 text-2xl font-black">{p.amount}</h3>
                 <div className="mt-1 text-xl font-bold text-primary-glow">{p.price}</div>
-                <button className="mt-6 rounded-lg bg-primary py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110">
-                  Buy Now
-                </button>
+                <Link
+                  to="/support"
+                  className="mt-6 rounded-lg bg-primary py-3 text-center font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110"
+                >
+                  Open Ticket to Buy
+                </Link>
               </div>
             ))}
           </div>
