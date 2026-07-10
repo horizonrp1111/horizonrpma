@@ -1,5 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import carGtr from "@/assets/car-gtr.jpg";
+import carM3 from "@/assets/car-m3.jpg";
+import carGt63 from "@/assets/car-gt63.jpg";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
