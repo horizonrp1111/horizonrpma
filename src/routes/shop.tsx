@@ -44,6 +44,12 @@ const memberships = [
   },
 ];
 
+const cars = [
+  { name: "Nissan GTR R35", image: carGtr },
+  { name: "BMW M3", image: carM3 },
+  { name: "Mercedes GT 63", image: carGt63 },
+];
+
 const cashPacks = [
   { amount: "100,000$", price: "7.99 dh" },
   { amount: "250,000$", price: "14.99 dh" },
