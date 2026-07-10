@@ -147,12 +147,36 @@ function ShopPage() {
         )}
 
         {category === "cars" && (
-          <div className="rounded-2xl border border-border/60 bg-card/60 p-16 text-center backdrop-blur-sm">
-            <div className="text-6xl">🚗</div>
-            <h2 className="mt-4 text-3xl font-black">Cars — Coming Soon</h2>
-            <p className="mt-3 text-muted-foreground">
-              We are preparing a garage full of exclusive vehicles. Stay tuned!
-            </p>
+          <div className="grid gap-6 md:grid-cols-3">
+            {cars.map((c) => (
+              <div
+                key={c.name}
+                className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm transition hover:-translate-y-1 hover:border-primary/50"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-black">
+                  <img
+                    src={c.image}
+                    alt={c.name}
+                    loading="lazy"
+                    width={1024}
+                    height={1024}
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-2xl font-black">{c.name}</h3>
+                  <p className="mt-2 flex-1 text-sm text-muted-foreground">
+                    Open a support ticket to get pricing and purchase this vehicle.
+                  </p>
+                  <Link
+                    to="/support"
+                    className="mt-6 rounded-lg bg-primary py-3 text-center font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:brightness-110"
+                  >
+                    Open Ticket to Buy
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
