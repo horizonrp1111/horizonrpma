@@ -128,6 +128,8 @@ function RootComponent() {
           <Outlet />
         </main>
         <SiteFooter />
+        <CustomCursor />
+
       </div>
     </QueryClientProvider>
   );
