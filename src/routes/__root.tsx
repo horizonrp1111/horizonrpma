@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
+import { CustomCursor } from "../components/CustomCursor";
+
 
 function NotFoundComponent() {
   return (
@@ -126,6 +128,8 @@ function RootComponent() {
           <Outlet />
         </main>
         <SiteFooter />
+        <CustomCursor />
+
       </div>
     </QueryClientProvider>
   );
